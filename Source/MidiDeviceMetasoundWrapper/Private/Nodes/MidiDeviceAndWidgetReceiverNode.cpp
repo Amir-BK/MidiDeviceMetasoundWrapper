@@ -254,16 +254,16 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 		//destructor
 		virtual ~FMidiDeviceAndWidgetReceiverOperator()
 		{
-			UE_LOG(LogTemp, Log, TEXT("MidiDeviceAndWidgetReceiverOperator Destructor"));
-			//if (MidiDeviceController != nullptr)
-			//{
-			//	MidiDeviceController->OnMIDIRawEvent.Remove(RawEventDelegateHandle);
-			//	UMIDIDeviceManager::ShutDownAllMIDIDevices();
-			//	//MidiDeviceController->
-			//	//UMIDIDeviceManager::MidiIn
-			//	//MidiDeviceController->ShutdownDevice();
-			//	MidiDeviceController = nullptr;
-			//}
+			//UE_LOG(LogTemp, Log, TEXT("MidiDeviceAndWidgetReceiverOperator Destructor"));
+			if (MidiDeviceController != nullptr)
+			{
+				MidiDeviceController->OnMIDIRawEvent.Remove(RawEventDelegateHandle);
+				//UMIDIDeviceManager::ShutDownAllMIDIDevices();
+				//MidiDeviceController->
+				//UMIDIDeviceManager::MidiIn
+				//MidiDeviceController->ShutdownDevice();
+				MidiDeviceController = nullptr;
+			}
 		}
 
 

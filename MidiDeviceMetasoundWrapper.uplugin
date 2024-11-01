@@ -4,7 +4,7 @@
 	"VersionName": "1.0",
 	"FriendlyName": "MidiDeviceMetasoundWrapper",
 	"Description": "A wrapper for Epic's MidiDevice plugin that introduces a native metasound node and a few other QOL improvements. ",
-	"Category": "Other",
+	"Category": "Audio",
 	"CreatedBy": "Amir Ben-Kiki",
 	"CreatedByURL": "https://github.com/Amir-BK",
 	"DocsURL": "",
@@ -24,6 +24,20 @@
 			"Name": "MidiDeviceWrapperSubsystem",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		}
+	],
+	"Plugins": [
+		{
+			"Name": "Metasound",
+			"Enabled": true
+		},
+		{
+			"Name": "MIDIDevice",
+			"Enabled": true
+		},
+		{
+			"Name": "Harmonix",
+			"Enabled": true
 		}
 	]
 }

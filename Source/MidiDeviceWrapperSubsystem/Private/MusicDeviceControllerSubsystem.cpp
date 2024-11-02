@@ -6,11 +6,11 @@
 namespace MusicDeviceRegistry
 {
 
-	static TMap<FString, UMIDIDeviceInputController*> MidiDeviceControllers;
+	static TMap<FString, UMusicDeviceInput*> MidiDeviceControllers;
 
 }
 
-UMIDIDeviceInputController* UMusicDeviceControllerSubsystem::GetOrCreateMidiInputDeviceController(const FString& MidiDeviceName)
+UMusicDeviceInput* UMusicDeviceControllerSubsystem::GetOrCreateMidiInputDeviceController(const FString& MidiDeviceName)
 {
 	//if the registry already contains device name, return it from registry, otherwise create a new one and add it to the registry
 	if (MusicDeviceRegistry::MidiDeviceControllers.Contains(MidiDeviceName))
@@ -43,11 +43,51 @@ UMIDIDeviceInputController* UMusicDeviceControllerSubsystem::GetOrCreateMidiInpu
 			return nullptr;
 		}
 		
-		UMIDIDeviceInputController* NewController = UMIDIDeviceManager::CreateMIDIDeviceInputController(NewDeviceToCreate->DeviceID, 64);
+		UMusicDeviceInput* NewController = UMusicDeviceControllerSubsystem::SetupMidiDeviceInput(MidiDeviceName);
 	
 		MusicDeviceRegistry::MidiDeviceControllers.Add(MidiDeviceName, NewController);
 		return NewController;
 	}
+}
+
+UMusicDeviceInput* UMusicDeviceControllerSubsystem::SetupMidiDeviceInput(const FString& MidiDeviceName)
+{
+	TArray<FMIDIDeviceInfo> InputDevices, OutputDevices;
+	UMIDIDeviceManager::FindAllMIDIDeviceInfo(InputDevices, OutputDevices);
+
+	//Find input device with the device name
+	FMIDIDeviceInfo* NewDeviceToCreate = InputDevices.FindByPredicate([MidiDeviceName](const FMIDIDeviceInfo& DeviceInfo)
+		{
+			return DeviceInfo.DeviceName.Contains(MidiDeviceName);
+		});
+
+	if (NewDeviceToCreate == nullptr)
+	{
+		UE_LOG(LogTemp, Error, TEXT("Could not find MIDI device with name %s"), *MidiDeviceName);
+		return nullptr;
+	}
+
+	UMusicDeviceInput* NewController = NewObject<UMusicDeviceInput>();
+
+	bool bStartedSuccessfully = false;
+	NewController->StartupDevice(NewDeviceToCreate->DeviceID, 64, /* Out */ bStartedSuccessfully);
+
+	if (!bStartedSuccessfully)
+	{
+		// Kill it
+		NewController->MarkAsGarbage();
+		NewController = nullptr;
+
+		//UE_LOG(LogMIDIDevice, Warning, TEXT("Create MIDI Device Controller wasn't able to create the controller successfully. Returning a null reference."));
+	}
+
+	NewController->OnMIDIRawEvent.AddLambda([NewController](UMIDIDeviceInputController* Controller, int32 Timestamp, int32 Type, int32 Channel, int32 MessageData1, int32 MessageData2)
+		{
+			EMIDIEventType EventType = static_cast<EMIDIEventType>(Type);
+			NewController->OnMIDIEvent.Broadcast(NewController, Timestamp, EventType, Channel, MessageData1, MessageData2, Type);
+		});
+	
+	return NewController;
 }
 
 void UMusicDeviceControllerSubsystem::TransmitNoteOnForDevice(const FName& DeviceName, int32 note, int32 velocity)

@@ -24,6 +24,11 @@
 			"Name": "MidiDeviceWrapperSubsystem",
 			"Type": "Runtime",
 			"LoadingPhase": "Default"
+		},
+		{
+			"Name": "MidiDeviceWrapperEditor",
+			"Type": "Editor",
+			"LoadingPhase": "Default"
 		}
 	],
 	"Plugins": [

@@ -4,7 +4,7 @@
 #include "UObject/UObjectArray.h"
 #include "Serialization/JsonSerializer.h"
 //#include "MetasoundUObjectRegistry.h"
-#include "Misc/EngineVersionComparison.h"
+
 #include "Modules/ModuleManager.h"
 
 #include "Widgets/Layout/SBox.h"
@@ -22,9 +22,8 @@
 void MidiDeviceWrapperEditor::StartupModule()
 {
 
-#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION == 4
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION > 4
 
-#else
 	//get metasound editor module
 	using namespace Metasound::Editor;
 
@@ -46,6 +45,8 @@ void MidiDeviceWrapperEditor::ShutdownModule()
 #undef LOCTEXT_NAMESPACE
 
 IMPLEMENT_MODULE(MidiDeviceWrapperEditor, MidiDeviceWrapperEditor)
+
+#if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION > 4
 
 TSharedRef<SWidget> MidiDevice::MetasoundWidget::CreateMidiVirtualKeyboardWidget(const Metasound::Editor::FCreateGraphNodeVisualizationWidgetParams& InParams)
 {
@@ -113,3 +114,5 @@ TSharedRef<SWidget> MidiDevice::MetasoundWidget::CreateMidiVirtualKeyboardWidget
 	return MainBox;
 
 }
+
+#endif

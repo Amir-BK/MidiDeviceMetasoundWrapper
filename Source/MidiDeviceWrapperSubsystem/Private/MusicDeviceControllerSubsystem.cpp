@@ -49,3 +49,28 @@ UMIDIDeviceInputController* UMusicDeviceControllerSubsystem::GetOrCreateMidiInpu
 		return NewController;
 	}
 }
+
+void UMusicDeviceControllerSubsystem::TransmitNoteOnForDevice(const FName& DeviceName, int32 note, int32 velocity)
+{
+	if (MusicDeviceRegistry::MidiDeviceControllers.Contains(DeviceName.ToString()))
+	{
+		auto FoundDevice = MusicDeviceRegistry::MidiDeviceControllers[DeviceName.ToString()];
+		if (FoundDevice != nullptr)
+		{
+			FoundDevice->OnMIDIRawEvent.Broadcast(FoundDevice, 0, 9, 0, note, velocity);
+		}
+	}
+}
+
+void UMusicDeviceControllerSubsystem::TransmitNoteOffForDevice(const FName& DeviceName, int32 note, int32 velocity)
+{
+	if (MusicDeviceRegistry::MidiDeviceControllers.Contains(DeviceName.ToString()))
+	{
+		auto FoundDevice = MusicDeviceRegistry::MidiDeviceControllers[DeviceName.ToString()];
+		if (FoundDevice != nullptr)
+		{
+			FoundDevice->OnMIDIRawEvent.Broadcast(FoundDevice, 0, 8, 0, note, velocity);
+		}
+	}
+}
+

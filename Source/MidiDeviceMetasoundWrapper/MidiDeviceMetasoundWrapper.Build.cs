@@ -60,7 +60,8 @@ public class MidiDeviceMetasoundWrapper : ModuleRules
                 "MetasoundGenerator",
                 "AudioMixer",
 				"MidiDeviceWrapperSubsystem",
-				"MIDIDevice" //MidiDevice should be Mac PC only // WE DON'T WANT THIS
+				"MIDIDevice",
+                //MidiDevice should be Mac PC only // WE DON'T WANT THIS // this module should be wholly ignorant of MIDIDevce...
 
 				// ... add other public dependencies that you statically link with here ...
 			}

@@ -45,4 +45,11 @@ public:
 
 	//UFUNCTION(BlueprintCallable, BlueprintPure, Category = "MusicDeviceControllerSubsystem")
 	//static UMusicDeviceInput* GetOrCreateMusicDeviceInput(const FString& MusicDeviceName) {};
+
+	UFUNCTION(BlueprintCallable, Category = "MusicDeviceControllerSubsystem")
+	static void TransmitNoteOnForDevice(const FName& DeviceName, int32 note, int32 velocity);
+
+	UFUNCTION(BlueprintCallable, Category = "MusicDeviceControllerSubsystem")
+	static void TransmitNoteOffForDevice(const FName& DeviceName, int32 note, int32 velocity);
+
 };

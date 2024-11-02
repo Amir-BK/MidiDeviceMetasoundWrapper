@@ -4,7 +4,10 @@
 
 
 
+
 #define LOCTEXT_NAMESPACE "MidiDeviceMetasoundWrapper"
+
+
 
 void MidiDeviceMetasoundWrapper::StartupModule()
 {
@@ -20,3 +23,5 @@ void MidiDeviceMetasoundWrapper::ShutdownModule()
 #undef LOCTEXT_NAMESPACE
 
 IMPLEMENT_MODULE(MidiDeviceMetasoundWrapper, MidiDeviceMetasoundWrapper)
+
+

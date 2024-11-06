@@ -48,70 +48,137 @@ IMPLEMENT_MODULE(MidiDeviceWrapperEditor, MidiDeviceWrapperEditor)
 
 #if ENGINE_MAJOR_VERSION == 5 && ENGINE_MINOR_VERSION > 4
 
-TSharedRef<SWidget> MidiDevice::MetasoundWidget::CreateMidiVirtualKeyboardWidget(const Metasound::Editor::FCreateGraphNodeVisualizationWidgetParams& InParams)
+class SMidiVirtualKeyboard : public SCompoundWidget
 {
+public:
+	SLATE_BEGIN_ARGS(SMidiVirtualKeyboard) {}
+	SLATE_END_ARGS()
+
 	TSharedPtr<SHorizontalBox> KeyboardWidget;
-	auto Node = InParams.MetaSoundNode;
-	//Node->GetOp
-	auto ThePin = Node->FindPin(TEXT("Midi Device Name"));
-	//auto DataInfo = Node->GetPinDataTypeInfo(*ThePin);
-	auto LiteralValue = ThePin->GetDefaultAsText();
-	
+	UMetasoundEditorGraphNode* Node;
+	FName DeviceName;
+	int OctaveOffset = 0;
 
-	auto MainBox = SNew(SBox)
-		.MinDesiredWidth(300)
-		.MinDesiredHeight(75)
-		[
-			SNew(SVerticalBox)
-				+ SVerticalBox::Slot()
-				.AutoHeight()
-				[
-					SNew(STextBlock)
-						.Text_Lambda([Node, ThePin] {
-						const FName DeviceName(TEXT("Midi Device Name"));
-						
-					//	return FText::FromString(Node->GetPinVa GetPinVisualizationValue<FString>(DeviceName).GetValue()); })
-						return ThePin->GetDefaultAsText(); })
-				]
-				+ SVerticalBox::Slot()
-				.FillHeight(1.0f)
-				[
-					SAssignNew(KeyboardWidget, SHorizontalBox)
-
-				]
-
-		];
-
-	const int NumKeys = 36;
-	const int FirstKey = 48;
-
-	for (int i = 0; i < NumKeys; i++)
+	void Tick(const FGeometry& AllottedGeometry,
+		const double InCurrentTime,
+		const float InDeltaTime
+	) override
 	{
-		const int Key = FirstKey + i;
-		const bool bIsBlackKey = (Key % 12 == 1) || (Key % 12 == 3) || (Key % 12 == 6) || (Key % 12 == 8) || (Key % 12 == 10);
+		//if (Node->GetMidiDeviceName() != DeviceName)
+		//{
+		//	DeviceName = Node->GetMidiDeviceName();
+		//	//recreate the keyboard
+		//	KeyboardWidget->ClearChildren();
+		//	Construct(SNew(SMidiVirtualKeyboard), Node);
+		//}
+		const auto& ThePin = Node->FindPin(TEXT("Midi Device Name"));
 
-		KeyboardWidget->AddSlot()
-			.AutoWidth()
-			[
-				SNew(SBox)
-					.WidthOverride(10)
-					[
-						SNew(SButton)
-							.Text(FText::FromString(FString::Printf(TEXT("%d"), Key)))
-							.OnPressed_Lambda([Key, Node, ThePin] {
-							UMusicDeviceControllerSubsystem::TransmitNoteOnForDevice(FName(ThePin->GetDefaultAsString()), Key, 127);
-								})
-							.OnReleased_Lambda([Key, Node, ThePin] {
-							UMusicDeviceControllerSubsystem::TransmitNoteOffForDevice(FName(ThePin->GetDefaultAsString()), Key, 0);
-								})
-
-							.ButtonStyle(FAppStyle::Get(), !bIsBlackKey ? "FlatButton.Dark" : "FlatButton")
-					]
-
-			];
+			const FName NewDeviceName = FName(ThePin->GetDefaultAsString());
+			if (NewDeviceName != DeviceName)
+			{
+				DeviceName = NewDeviceName;
+				//recreate the keyboard
+				//KeyboardWidget->ClearChildren();
+				//Construct(SNew(SMidiVirtualKeyboard), Node);
+			}
 	}
 
-	return MainBox;
+	void Construct(const FArguments& InArgs, const Metasound::Editor::FCreateGraphNodeVisualizationWidgetParams& InParams)
+	{
+		const int NumKeys = 36;
+		const int FirstKey = 48;
+		Node = InParams.MetaSoundNode;
+	//ode->
+
+		ChildSlot[
+			SNew(SBox)
+				.MinDesiredWidth(300)
+				.MinDesiredHeight(75)
+				[
+					SNew(SVerticalBox)
+						+ SVerticalBox::Slot()
+						.AutoHeight()
+						[
+							SNew(SHorizontalBox)
+								//+ octave button
+								+ SHorizontalBox::Slot()
+								[
+									SNew(SButton)
+										.Text(FText::FromString("-"))
+										.OnPressed_Lambda([this] {
+										OctaveOffset = FMath::Max(OctaveOffset - 1 , -2);
+											})
+								]
+								+ SHorizontalBox::Slot()
+								[
+									SNew(SButton)
+										.Text(FText::FromString("+"))
+										.OnPressed_Lambda([this] {
+										OctaveOffset = FMath::Min(OctaveOffset+ 1, 2);
+											})
+								]
+
+								+ SHorizontalBox::Slot()
+								[
+									SNew(STextBlock)
+										.Text_Lambda([this] {
+										return FText::FromString(FString::Printf(TEXT("%d"), OctaveOffset));
+											})
+								]
+
+								+ SHorizontalBox::Slot()
+								[
+									SNew(STextBlock)
+										.Text_Lambda([this] {
+										return FText::FromString(FString::Printf(TEXT("%s"), *DeviceName.ToString()));
+											})
+								]
+
+						]
+						+ SVerticalBox::Slot()
+						.FillHeight(1.0f)
+						[
+							SAssignNew(KeyboardWidget, SHorizontalBox)
+
+						]
+				]
+		];
+
+		for (int i = 0; i < NumKeys; i++)
+		{
+			const int Key = FirstKey + i;
+			const bool bIsBlackKey = (Key % 12 == 1) || (Key % 12 == 3) || (Key % 12 == 6) || (Key % 12 == 8) || (Key % 12 == 10);
+
+			KeyboardWidget->AddSlot()
+				.AutoWidth()
+				[
+					SNew(SBox)
+						.WidthOverride(10)
+						[
+							SNew(SButton)
+								.Text(FText::FromString(FString::Printf(TEXT("%d"), Key)))
+								.OnPressed_Lambda([this, Key] {
+								UMusicDeviceControllerSubsystem::TransmitNoteOnForDevice(DeviceName, Key + OctaveOffset * 12, 127);
+									})
+								.OnReleased_Lambda([this, Key] {
+								UMusicDeviceControllerSubsystem::TransmitNoteOffForDevice(DeviceName, Key + OctaveOffset * 12, 0);
+									})
+
+								.ButtonStyle(FAppStyle::Get(), !bIsBlackKey ? "FlatButton.Dark" : "FlatButton")
+						]
+
+				];
+		}
+	}
+
+
+
+};
+
+TSharedRef<SWidget> MidiDevice::MetasoundWidget::CreateMidiVirtualKeyboardWidget(const Metasound::Editor::FCreateGraphNodeVisualizationWidgetParams& InParams)
+{
+	
+	return SNew(SMidiVirtualKeyboard, InParams);
 
 }
 

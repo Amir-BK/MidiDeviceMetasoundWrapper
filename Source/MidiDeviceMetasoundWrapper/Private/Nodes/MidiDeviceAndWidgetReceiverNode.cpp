@@ -131,7 +131,7 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 			FMidiStreamReadRef MidiStream;
 			FInt32ReadRef MinTrackIndex;
 			FInt32ReadRef MaxTrackIndex;
-			FStringReadRef SfzLibPathName;
+			FStringReadRef MidiDeviceName;
 			//FBoolReadRef IncludeConductorTrack;
 		};
 
@@ -175,7 +175,7 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 			InVertexData.BindReadVertex(Inputs::MidiStreamName, Inputs.MidiStream);
 			InVertexData.BindReadVertex(Inputs::MinTrackIndexName, Inputs.MinTrackIndex);
 			InVertexData.BindReadVertex(Inputs::MaxTrackIndexName, Inputs.MaxTrackIndex);
-			InVertexData.BindReadVertex(Inputs::MidiDeviceNameName, Inputs.SfzLibPathName);
+			InVertexData.BindReadVertex(Inputs::MidiDeviceNameName, Inputs.MidiDeviceName);
 			//InVertexData.BindReadVertex(Inputs::IncludeConductorTrackName, Inputs.IncludeConductorTrack);
 		}
 
@@ -186,13 +186,20 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 
 		void Reset(const FResetParams&)
 		{
-			OnMidiInputDeviceChanged(*Inputs.SfzLibPathName.Get());
+			OnMidiInputDeviceChanged(*Inputs.MidiDeviceName.Get());
 		}
 
 
 		void OnMidiInputDeviceChanged(FString NewSelection)
 		{
 			//int32 DeviceID;
+				//if we have a device controller, we need to remove the delegate
+				if (MidiDeviceController != nullptr)
+				{
+					MidiDeviceController->OnMIDIRawEvent.Remove(RawEventDelegateHandle);
+					MidiDeviceController = nullptr;
+				}
+
 			
 				MidiDeviceController = UMusicDeviceControllerSubsystem::GetOrCreateMidiInputDeviceController(NewSelection);
 

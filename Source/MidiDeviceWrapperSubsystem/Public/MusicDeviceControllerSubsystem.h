@@ -24,7 +24,7 @@ class MIDIDEVICEWRAPPERSUBSYSTEM_API UMusicDeviceInput : public UMIDIDeviceInput
 	{
 		//unbind the delegate and call super destructor
 		OnMIDIEvent.Clear();
-
+		UMIDIDeviceManager::ShutDownAllMIDIDevices();
 	}
 
 public:

@@ -45,7 +45,7 @@ UMusicDeviceInput* UMusicDeviceControllerSubsystem::GetOrCreateMidiInputDeviceCo
 		
 		UMusicDeviceInput* NewController = UMusicDeviceControllerSubsystem::SetupMidiDeviceInput(MidiDeviceName);
 	
-		MusicDeviceRegistry::MidiDeviceControllers.Add(MidiDeviceName, NewController);
+		
 		return NewController;
 	}
 }
@@ -80,13 +80,17 @@ UMusicDeviceInput* UMusicDeviceControllerSubsystem::SetupMidiDeviceInput(const F
 
 		//UE_LOG(LogMIDIDevice, Warning, TEXT("Create MIDI Device Controller wasn't able to create the controller successfully. Returning a null reference."));
 	}
+	else {
+		NewController->OnMIDIRawEvent.AddLambda([NewController](UMIDIDeviceInputController* Controller, int32 Timestamp, int32 Type, int32 Channel, int32 MessageData1, int32 MessageData2)
+			{
+				EMIDIEventType EventType = static_cast<EMIDIEventType>(Type);
+				NewController->OnMIDIEvent.Broadcast(NewController, Timestamp, EventType, Channel, MessageData1, MessageData2, Type);
+			});
 
-	NewController->OnMIDIRawEvent.AddLambda([NewController](UMIDIDeviceInputController* Controller, int32 Timestamp, int32 Type, int32 Channel, int32 MessageData1, int32 MessageData2)
-		{
-			EMIDIEventType EventType = static_cast<EMIDIEventType>(Type);
-			NewController->OnMIDIEvent.Broadcast(NewController, Timestamp, EventType, Channel, MessageData1, MessageData2, Type);
-		});
-	
+		MusicDeviceRegistry::MidiDeviceControllers.Add(MidiDeviceName, NewController);
+	}
+
+
 	return NewController;
 }
 

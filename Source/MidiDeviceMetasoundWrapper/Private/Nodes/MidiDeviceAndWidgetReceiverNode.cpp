@@ -221,7 +221,6 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 
 		void OnReceiveRawMidiMessage(UMIDIDeviceInputController* MIDIDeviceController, int32 Timestamp, int32 Type, int32 Channel, int32 MessageData1, int32 MessageData2)
 		{
-			UE_LOG(LogTemp, Warning, TEXT("Midi Raw Event: %d %d %d %d %d"), Timestamp, Type, Channel, MessageData1, MessageData2);
 			const EMIDIEventType MIDIEventType = static_cast<EMIDIEventType>(Type);
 
 			switch (MIDIEventType)

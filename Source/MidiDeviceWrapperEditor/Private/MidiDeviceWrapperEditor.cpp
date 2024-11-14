@@ -14,6 +14,7 @@
 
 #include "MetasoundDataTypeRegistrationMacro.h"
 #include "MusicDeviceControllerSubsystem.h"
+#include "HarmonixMetasound/DataTypes/MidiStream.h"
 #include "MetasoundEditorGraphNode.h"
 
 
@@ -56,6 +57,17 @@ public:
 
 	TSharedPtr<SHorizontalBox> KeyboardWidget;
 	UMetasoundEditorGraphNode* Node;
+	UMIDIDeviceInputController* MidiDeviceController = nullptr;
+	TArray<TTuple<int32, FMidiMsg>> PendingMessages;
+	TMap<int32, TSharedPtr<SButton>> KeyButtons;
+	TMap<int32, TSharedPtr<SBorder>> KeyBorders;
+
+	//set up styles for regular, black key and active key
+	FButtonStyle RegularKeyStyle;
+	FButtonStyle BlackKeyStyle;
+	FButtonStyle ActiveKeyStyle;
+
+
 	FName DeviceName;
 	int OctaveOffset = 0;
 
@@ -64,27 +76,116 @@ public:
 		const float InDeltaTime
 	) override
 	{
-		//if (Node->GetMidiDeviceName() != DeviceName)
-		//{
-		//	DeviceName = Node->GetMidiDeviceName();
-		//	//recreate the keyboard
-		//	KeyboardWidget->ClearChildren();
-		//	Construct(SNew(SMidiVirtualKeyboard), Node);
-		//}
+
 		const auto& ThePin = Node->FindPin(TEXT("Midi Device Name"));
 
-			const FName NewDeviceName = FName(ThePin->GetDefaultAsString());
-			if (NewDeviceName != DeviceName)
+		const FName NewDeviceName = FName(ThePin->GetDefaultAsString());
+		if (NewDeviceName != DeviceName)
+		{
+			DeviceName = NewDeviceName;
+				
+			//get the device and bind the delegate
+			MidiDeviceController = UMusicDeviceControllerSubsystem::GetOrCreateMidiInputDeviceController(DeviceName.ToString());
+			if (MidiDeviceController)
 			{
-				DeviceName = NewDeviceName;
-				//recreate the keyboard
-				//KeyboardWidget->ClearChildren();
-				//Construct(SNew(SMidiVirtualKeyboard), Node);
+				MidiDeviceController->OnMIDIRawEvent.AddSP(this, &SMidiVirtualKeyboard::OnReceiveRawMidiMessage);
 			}
+		}
+
+		//process pending messages, if any, we only update the color of the borders
+		for (const auto& [tick, msg] : PendingMessages)
+		{
+			if (msg.IsNoteOn())
+			{
+				const int Key = msg.GetStdData1();
+				
+				//KeyBorders[Key]->SetForegroundColor(FLinearColor::Blue);
+				KeyButtons[Key]->SetButtonStyle(&ActiveKeyStyle);
+				
+				//add a text saying on?
+				
+			}
+			else if (msg.IsNoteOff())
+			{
+				const int Key = msg.GetStdData1();
+				
+				//KeyBorders[Key]->SetForegroundColor(/* Transparent */ FLinearColor(0,0,0,0));
+				//return to original color
+
+				// is black key?
+				const bool bIsBlackKey = (Key % 12 == 1) || (Key % 12 == 3) || (Key % 12 == 6) || (Key % 12 == 8) || (Key % 12 == 10);
+
+				KeyButtons[Key]->SetButtonStyle(!bIsBlackKey ? &BlackKeyStyle : &RegularKeyStyle);
+				
+
+
+
+			}
+		}
+		
+		PendingMessages.Empty();
+	}
+
+	void OnReceiveRawMidiMessage(UMIDIDeviceInputController* MIDIDeviceController, int32 Timestamp, int32 Type, int32 Channel, int32 MessageData1, int32 MessageData2)
+	{
+		//UE_LOG(LogTemp, Warning, TEXT("Midi Raw Event: %d %d %d %d %d"), Timestamp, Type, Channel, MessageData1, MessageData2);
+		const EMIDIEventType MIDIEventType = static_cast<EMIDIEventType>(Type);
+
+		switch (MIDIEventType)
+		{
+		case EMIDIEventType::NoteOn:
+			UE_LOG(LogTemp, Warning, TEXT("Note On"));
+			PendingMessages.Add(TTuple<int32, FMidiMsg>(Timestamp, FMidiMsg::CreateNoteOn(Channel, MessageData1, MessageData2)));
+			break;
+		case EMIDIEventType::NoteOff:
+			UE_LOG(LogTemp, Warning, TEXT("Note Off"));
+			PendingMessages.Add(TTuple<int32, FMidiMsg>(Timestamp, FMidiMsg::CreateNoteOff(Channel, MessageData1)));
+			break;
+		case EMIDIEventType::ControlChange:
+			UE_LOG(LogTemp, Warning, TEXT("Control Change"));
+			PendingMessages.Add(TTuple<int32, FMidiMsg>(Timestamp, FMidiMsg::CreateControlChange(Channel, MessageData1, MessageData2)));
+			break;
+		case EMIDIEventType::ProgramChange:
+			UE_LOG(LogTemp, Warning, TEXT("Program Change"));
+			//PendingMessages.Add(TTuple<int32, FMidiMsg>(Timestamp, FMidiMsg::CreateProgramChange(Channel, MessageData1)));
+			break;
+		case EMIDIEventType::PitchBend:
+			UE_LOG(LogTemp, Warning, TEXT("Pitch Bend"));
+			//PendingMessages.Add(TTuple<int32, FMidiMsg>(Timestamp, FMidiMsg(uint8(0b1110), MessageData1, MessageData2)));
+			break;
+		case EMIDIEventType::NoteAfterTouch:
+			UE_LOG(LogTemp, Warning, TEXT("Aftertouch"));
+			break;
+		default:
+			UE_LOG(LogTemp, Warning, TEXT("Unknown Event"));
+			break;
+		}
+
 	}
 
 	void Construct(const FArguments& InArgs, const Metasound::Editor::FCreateGraphNodeVisualizationWidgetParams& InParams)
 	{
+		//set up styles for regular, black key and active key
+
+
+        RegularKeyStyle = FButtonStyle()
+        .SetNormal(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton").Normal)
+        .SetHovered(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton").Hovered)
+        .SetPressed(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton").Pressed)
+        .SetDisabled(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton").Disabled);
+
+		BlackKeyStyle = FButtonStyle()
+			.SetNormal(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Dark").Normal)
+			.SetHovered(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Dark").Hovered)
+			.SetPressed(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Dark").Pressed)
+			.SetDisabled(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Dark").Disabled);
+
+		ActiveKeyStyle = FButtonStyle()
+			.SetNormal(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Warning").Normal)
+			.SetHovered(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Warning").Hovered)
+			.SetPressed(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Warning").Pressed)
+			.SetDisabled(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Warning").Disabled);
+		
 		const int NumKeys = 36;
 		const int FirstKey = 48;
 		Node = InParams.MetaSoundNode;
@@ -149,14 +250,17 @@ public:
 			const int Key = FirstKey + i;
 			const bool bIsBlackKey = (Key % 12 == 1) || (Key % 12 == 3) || (Key % 12 == 6) || (Key % 12 == 8) || (Key % 12 == 10);
 
+			TSharedPtr<SButton> NewButton;
+			TSharedPtr<SBorder> ContentBorder;
+
 			KeyboardWidget->AddSlot()
 				.AutoWidth()
 				[
 					SNew(SBox)
 						.WidthOverride(10)
 						[
-							SNew(SButton)
-								.Text(FText::FromString(FString::Printf(TEXT("%d"), Key)))
+							SAssignNew(NewButton, SButton)
+								//.Text(FText::FromString(FString::Printf(TEXT("%d"), Key)))
 								.OnPressed_Lambda([this, Key] {
 								UMusicDeviceControllerSubsystem::TransmitNoteOnForDevice(DeviceName, Key + OctaveOffset * 12, 127);
 									})
@@ -165,9 +269,13 @@ public:
 									})
 
 								.ButtonStyle(FAppStyle::Get(), !bIsBlackKey ? "FlatButton.Dark" : "FlatButton")
+
 						]
 
 				];
+
+			KeyButtons.Add(Key, NewButton);
+			//KeyBorders.Add(Key, ContentBorder);
 		}
 	}
 

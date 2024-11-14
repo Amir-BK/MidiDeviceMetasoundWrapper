@@ -64,8 +64,9 @@ public:
 
 	//set up styles for regular, black key and active key
 	FButtonStyle RegularKeyStyle;
-	FButtonStyle BlackKeyStyle;
+	FButtonStyle AccidentalKeyStyle;
 	FButtonStyle ActiveKeyStyle;
+	FButtonStyle ActiveAccidentalKeyStyle;
 
 
 	FName DeviceName;
@@ -95,29 +96,19 @@ public:
 		//process pending messages, if any, we only update the color of the borders
 		for (const auto& [tick, msg] : PendingMessages)
 		{
+			const int Key = msg.GetStdData1();
+			const bool bIsBlackKey = (Key % 12 == 1) || (Key % 12 == 3) || (Key % 12 == 6) || (Key % 12 == 8) || (Key % 12 == 10);
 			if (msg.IsNoteOn())
 			{
-				const int Key = msg.GetStdData1();
-				
-				//KeyBorders[Key]->SetForegroundColor(FLinearColor::Blue);
-				KeyButtons[Key]->SetButtonStyle(&ActiveKeyStyle);
-				
-				//add a text saying on?
+
+				KeyButtons[Key]->SetButtonStyle(!bIsBlackKey ? &ActiveKeyStyle : &ActiveAccidentalKeyStyle);
+
 				
 			}
 			else if (msg.IsNoteOff())
 			{
-				const int Key = msg.GetStdData1();
-				
-				//KeyBorders[Key]->SetForegroundColor(/* Transparent */ FLinearColor(0,0,0,0));
-				//return to original color
-
-				// is black key?
-				const bool bIsBlackKey = (Key % 12 == 1) || (Key % 12 == 3) || (Key % 12 == 6) || (Key % 12 == 8) || (Key % 12 == 10);
-
-				KeyButtons[Key]->SetButtonStyle(!bIsBlackKey ? &BlackKeyStyle : &RegularKeyStyle);
-				
-
+			
+				KeyButtons[Key]->SetButtonStyle(!bIsBlackKey ? &AccidentalKeyStyle : &RegularKeyStyle);
 
 
 			}
@@ -166,7 +157,9 @@ public:
 	void Construct(const FArguments& InArgs, const Metasound::Editor::FCreateGraphNodeVisualizationWidgetParams& InParams)
 	{
 		//set up styles for regular, black key and active key
-
+		auto ActiveAccidentalNormal = FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Warning").Normal;
+		//dark orange
+		ActiveAccidentalNormal.TintColor = FLinearColor(0.5f, 0.2f, 0.0f, 1.0f);
 
         RegularKeyStyle = FButtonStyle()
         .SetNormal(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton").Normal)
@@ -174,10 +167,10 @@ public:
         .SetPressed(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton").Pressed)
         .SetDisabled(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton").Disabled);
 
-		BlackKeyStyle = FButtonStyle()
+		AccidentalKeyStyle = FButtonStyle()
 			.SetNormal(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Dark").Normal)
 			.SetHovered(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Dark").Hovered)
-			.SetPressed(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Dark").Pressed)
+			.SetPressed(ActiveAccidentalNormal)
 			.SetDisabled(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Dark").Disabled);
 
 		ActiveKeyStyle = FButtonStyle()
@@ -185,6 +178,18 @@ public:
 			.SetHovered(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Warning").Hovered)
 			.SetPressed(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Warning").Pressed)
 			.SetDisabled(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Warning").Disabled);
+
+
+
+		//needs to be slightly darker
+		ActiveAccidentalKeyStyle = FButtonStyle()
+			.SetNormal(ActiveAccidentalNormal)
+			.SetHovered(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Warning").Hovered)
+			.SetPressed(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Warning").Pressed)
+			.SetDisabled(FAppStyle::Get().GetWidgetStyle<FButtonStyle>("FlatButton.Warning").Disabled);
+
+
+
 		
 		const int NumKeys = 36;
 		const int FirstKey = 48;

@@ -13,19 +13,21 @@
 #include "HarmonixMetasound/DataTypes/MusicTransport.h"
 #include "MidiDeviceManager.h"
 
-#include "MidiDeviceAndWidgetReceiverNode.h"
+#include "TriggerToMidiNote.h"
 #include "MusicDeviceControllerSubsystem.h"
 
 
-#define LOCTEXT_NAMESPACE "MidiDeviceMetasoundwrapper_MidiDeviceAndWidgetReceiverNode"
+#define LOCTEXT_NAMESPACE "MidiDeviceMetasoundwrapper_TriggerToMidiNoteNode"
 
-namespace MidiDeviceMetasoundwrapper::MidiStreamEventTrackMergeOp
+
+//literally the exact same thing as in the other node, I'm just lazy and don't want to move this to its own header. 
+namespace MidiDeviceMetasoundwrapper::MidiStreamEventTriggerMergeOp
 {
 	/**
 	Adds notes from a TArray<TTupe<uint32, FMidiMsg>> to a FMidiStream
 
 	*/
-	class MIDIDEVICEMETASOUNDWRAPPER_API FMidiStreamEventTrackMerge
+	class MIDIDEVICEMETASOUNDWRAPPER_API FMidiStreamTriggerMerge
 	{
 	public:
 		void Process(const HarmonixMetasound::FMidiStream& InStream, TArray<TTuple<int32, FMidiMsg>> InEvents, HarmonixMetasound::FMidiStream& OutStream) {
@@ -45,7 +47,7 @@ namespace MidiDeviceMetasoundwrapper::MidiStreamEventTrackMergeOp
 
 };
 
-namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
+namespace MidiDeviceMetasoundwrapper::TriggerToMidiNoteNode
 {
 	using namespace Metasound;
 	using namespace HarmonixMetasound;
@@ -55,7 +57,7 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 		static FNodeClassName ClassName
 		{
 			"unDAW",
-			"MidiStreamInput",
+			"TriggerToMidiNote",
 			""
 		};
 		return ClassName;
@@ -72,7 +74,6 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 		DEFINE_INPUT_METASOUND_PARAM(MidiStream, "MidiStream", "MidiStream");
 		DEFINE_INPUT_METASOUND_PARAM(MinTrackIndex, "Track Index", "Track");
 		DEFINE_INPUT_METASOUND_PARAM(MaxTrackIndex, "Channel Index", "Channel");
-		DEFINE_INPUT_METASOUND_PARAM(MidiDeviceName, "Midi Device Name", "The name of the midi input device we want to receive with this node")
 		//trigger, pitch, velocity for single note triggers
 		DEFINE_INPUT_METASOUND_PARAM(NoteOn, "NoteOn", "Trigger for generating single notes without a midi device");
 		DEFINE_INPUT_METASOUND_PARAM(NoteOff, "NoteOff", "Trigger for generating single notes without a midi device");
@@ -97,8 +98,8 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 					Info.ClassName = GetClassName();
 					Info.MajorVersion = 1;
 					Info.MinorVersion = 0;
-					Info.DisplayName = INVTEXT("MIDI Stream Input Node");
-					Info.Description = INVTEXT("merge midi inputs into an existing midi stream");
+					Info.DisplayName = INVTEXT("Trigger To Midi Note");
+					Info.Description = INVTEXT("Trigger To Midi Note Node");
 					Info.Author = TEXT("Amir Ben-Kiki");
 					Info.PromptIfMissing = PluginNodeMissingPrompt;
 					Info.DefaultInterface = GetVertexInterface();
@@ -119,13 +120,11 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 					TInputDataVertex<FMidiStream>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::MidiStream)),
 					TInputDataVertex<int32>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::MinTrackIndex), 0),
 					TInputDataVertex<int32>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::MaxTrackIndex), 0),
-					TInputDataVertex<FString>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::MidiDeviceName)),
 					TInputDataVertex<FTrigger>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::NoteOn)),
 					TInputDataVertex<FTrigger>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::NoteOff)),
 					TInputDataVertex<int32>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::Pitch), 0),
 					TInputDataVertex<int32>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::Velocity), 0)
 
-					//TInputDataVertex<bool>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::IncludeConductorTrack), false)
 				),
 				FOutputVertexInterface(
 					TOutputDataVertex<FMidiStream>(METASOUND_GET_PARAM_NAME_AND_METADATA(Outputs::MidiStream))
@@ -141,7 +140,6 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 			FMidiStreamReadRef MidiStream;
 			FInt32ReadRef MinTrackIndex;
 			FInt32ReadRef MaxTrackIndex;
-			FStringReadRef MidiDeviceName;
 			FTriggerReadRef NoteOn;
 			FTriggerReadRef NoteOff;
 			FInt32ReadRef Pitch;
@@ -164,12 +162,10 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 				InputData.GetOrConstructDataReadReference<FMidiStream>(Inputs::MidiStreamName),
 				InputData.GetOrCreateDefaultDataReadReference<int32>(Inputs::MinTrackIndexName, InParams.OperatorSettings),
 				InputData.GetOrCreateDefaultDataReadReference<int32>(Inputs::MaxTrackIndexName, InParams.OperatorSettings),
-				InputData.GetOrCreateDefaultDataReadReference<FString>(Inputs::MidiDeviceNameName, InParams.OperatorSettings),
 				InputData.GetOrCreateDefaultDataReadReference<FTrigger>(Inputs::NoteOnName, InParams.OperatorSettings),
 				InputData.GetOrCreateDefaultDataReadReference<FTrigger>(Inputs::NoteOffName, InParams.OperatorSettings),
 				InputData.GetOrCreateDefaultDataReadReference<int32>(Inputs::PitchName, InParams.OperatorSettings),
 				InputData.GetOrCreateDefaultDataReadReference<int32>(Inputs::VelocityName, InParams.OperatorSettings)
-				//InputData.GetOrCreateDefaultDataReadReference<bool>(Inputs::IncludeConductorTrackName, InParams.OperatorSettings)
 			};
 
 			FOutputs Outputs
@@ -193,7 +189,6 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 			InVertexData.BindReadVertex(Inputs::MidiStreamName, Inputs.MidiStream);
 			InVertexData.BindReadVertex(Inputs::MinTrackIndexName, Inputs.MinTrackIndex);
 			InVertexData.BindReadVertex(Inputs::MaxTrackIndexName, Inputs.MaxTrackIndex);
-			InVertexData.BindReadVertex(Inputs::MidiDeviceNameName, Inputs.MidiDeviceName);
 			InVertexData.BindReadVertex(Inputs::NoteOnName, Inputs.NoteOn);
 			InVertexData.BindReadVertex(Inputs::NoteOffName, Inputs.NoteOff);
 			InVertexData.BindReadVertex(Inputs::PitchName, Inputs.Pitch);
@@ -208,96 +203,31 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 
 		void Reset(const FResetParams&)
 		{
-			OnMidiInputDeviceChanged(*Inputs.MidiDeviceName.Get());
+
 		}
 
 
 		void OnMidiInputDeviceChanged(FString NewSelection)
 		{
-			//int32 DeviceID;
-				//if we have a device controller, we need to remove the delegate
-				if (MidiDeviceController != nullptr)
-				{
-					MidiDeviceController->OnMIDIRawEvent.Remove(RawEventDelegateHandle);
-					MidiDeviceController = nullptr;
-				}
-
-			
-				MidiDeviceController = UMusicDeviceControllerSubsystem::GetOrCreateMidiInputDeviceController(NewSelection);
-
-				if (MidiDeviceController != nullptr)
-				{
-					RawEventDelegateHandle = MidiDeviceController->OnMIDIRawEvent.AddRaw(this, &FMidiDeviceAndWidgetReceiverOperator::OnReceiveRawMidiMessage);
-				}
-				else
-				{
-					UE_LOG(LogTemp, Error, TEXT("Could not create MIDI device controller"));
-				}
-
-			
-				//TickOffset = Inputs.MidiStream->GetClock()->GetCurrentMidiTick();
-			
-
+		
 
 		}
 
 		void OnReceiveRawMidiMessage(UMIDIDeviceInputController* MIDIDeviceController, int32 Timestamp, int32 Type, int32 Channel, int32 MessageData1, int32 MessageData2)
 		{
-			const EMIDIEventType MIDIEventType = static_cast<EMIDIEventType>(Type);
-
-			switch (MIDIEventType)
-			{
-			case EMIDIEventType::NoteOn:
-				PendingMessages.Add(TTuple<int32, FMidiMsg>(Timestamp, FMidiMsg::CreateNoteOn(Channel, MessageData1, MessageData2)));
-				break;
-			case EMIDIEventType::NoteOff:
-				PendingMessages.Add(TTuple<int32, FMidiMsg>(Timestamp, FMidiMsg::CreateNoteOff(Channel, MessageData1)));
-				break;
-			case EMIDIEventType::ControlChange:
-				UE_LOG(LogTemp, Warning, TEXT("Control Change"));
-				PendingMessages.Add(TTuple<int32, FMidiMsg>(Timestamp, FMidiMsg::CreateControlChange(Channel, MessageData1, MessageData2)));
-				break;
-			case EMIDIEventType::ProgramChange:
-				UE_LOG(LogTemp, Warning, TEXT("Program Change"));
-				//PendingMessages.Add(TTuple<int32, FMidiMsg>(Timestamp, FMidiMsg::CreateProgramChange(Channel, MessageData1)));
-				break;
-			case EMIDIEventType::PitchBend:
-				UE_LOG(LogTemp, Warning, TEXT("Pitch Bend"));
-				//PendingMessages.Add(TTuple<int32, FMidiMsg>(Timestamp, FMidiMsg(uint8(0b1110), MessageData1, MessageData2)));
-				break;
-			case EMIDIEventType::NoteAfterTouch:
-				UE_LOG(LogTemp, Warning, TEXT("Aftertouch"));
-				break;
-			default:
-				UE_LOG(LogTemp, Warning, TEXT("Unknown Event"));
-				break;
-			}
-			//construct new midi message from data
-			//we'll probably need a switch here... I hope not
-			//FMidiMsg NewMidiMsg(Type, MessageData1, MessageData2);
-			//PendingMessages.Add(TTuple<int32, FMidiMsg>(Timestamp, NewMidiMsg));
-
+			
 		}
 
 		//destructor
 		virtual ~FMidiDeviceAndWidgetReceiverOperator()
 		{
-			//UE_LOG(LogTemp, Log, TEXT("MidiDeviceAndWidgetReceiverOperator Destructor"));
-			if (MidiDeviceController != nullptr)
-			{
-				MidiDeviceController->OnMIDIRawEvent.Remove(RawEventDelegateHandle);
-				//UMIDIDeviceManager::ShutDownAllMIDIDevices();
-				//MidiDeviceController->
-				//UMIDIDeviceManager::MidiIn
-				//MidiDeviceController->ShutdownDevice();
-				MidiDeviceController = nullptr;
-			}
+			
 		}
 
 
 		void Execute()
 		{
-			//Filter.SetFilterValues(*Inputs.MinTrackIndex, *Inputs.MaxTrackIndex, false);
+
 
 			Outputs.MidiStream->PrepareBlock();
 
@@ -337,7 +267,7 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 		FDelegateHandle RawEventDelegateHandle;
 		int32 TickOffset = 0; //in theory we can start when the stream tick is different from the device tick, we'll see
 		TArray<TTuple<int32, FMidiMsg>> PendingMessages;
-		MidiDeviceMetasoundwrapper::MidiStreamEventTrackMergeOp::FMidiStreamEventTrackMerge MergeOp;
+		MidiDeviceMetasoundwrapper::MidiStreamEventTriggerMergeOp::FMidiStreamTriggerMerge MergeOp;
 		//unDAWMetasounds::TrackIsolatorOP::FMidiTrackIsolator Filter;
 	};
 
@@ -351,7 +281,7 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 		}
 		virtual ~FunDAWMidiInputNode() override = default;
 
-		FMidiDeviceAndWidgetReceiverOperator* MyOperator = nullptr;
+		//FMidiDeviceAndWidgetReceiverOperator* MyOperator = nullptr;
 	};
 
 	METASOUND_REGISTER_NODE(FunDAWMidiInputNode)

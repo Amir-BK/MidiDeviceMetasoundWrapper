@@ -73,6 +73,11 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 		DEFINE_INPUT_METASOUND_PARAM(MinTrackIndex, "Track Index", "Track");
 		DEFINE_INPUT_METASOUND_PARAM(MaxTrackIndex, "Channel Index", "Channel");
 		DEFINE_INPUT_METASOUND_PARAM(MidiDeviceName, "Midi Device Name", "The name of the midi input device we want to receive with this node")
+		//trigger, pitch, velocity for single note triggers
+		DEFINE_INPUT_METASOUND_PARAM(NoteOn, "NoteOn", "Trigger for generating single notes without a midi device");
+		DEFINE_INPUT_METASOUND_PARAM(NoteOff, "NoteOff", "Trigger for generating single notes without a midi device");
+		DEFINE_INPUT_METASOUND_PARAM(Pitch, "Pitch", "the pitch to use when generating single notes using the trigger");
+		DEFINE_INPUT_METASOUND_PARAM(Velocity, "Velocity", "the velocity to use when generating single notes using the trigger");
 		//DEFINE_INPUT_METASOUND_PARAM(IncludeConductorTrack, "Include Conductor Track", "Enable to include the conductor track (AKA track 0)");
 	}
 
@@ -114,7 +119,12 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 					TInputDataVertex<FMidiStream>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::MidiStream)),
 					TInputDataVertex<int32>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::MinTrackIndex), 0),
 					TInputDataVertex<int32>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::MaxTrackIndex), 0),
-					TInputDataVertex<FString>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::MidiDeviceName))
+					TInputDataVertex<FString>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::MidiDeviceName)),
+					TInputDataVertex<FTrigger>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::NoteOn)),
+					TInputDataVertex<FTrigger>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::NoteOff)),
+					TInputDataVertex<int32>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::Pitch), 0),
+					TInputDataVertex<int32>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::Velocity), 0)
+
 					//TInputDataVertex<bool>(METASOUND_GET_PARAM_NAME_AND_METADATA(Inputs::IncludeConductorTrack), false)
 				),
 				FOutputVertexInterface(
@@ -132,6 +142,10 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 			FInt32ReadRef MinTrackIndex;
 			FInt32ReadRef MaxTrackIndex;
 			FStringReadRef MidiDeviceName;
+			FTriggerReadRef NoteOn;
+			FTriggerReadRef NoteOff;
+			FInt32ReadRef Pitch;
+			FInt32ReadRef Velocity;
 			//FBoolReadRef IncludeConductorTrack;
 		};
 
@@ -150,7 +164,11 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 				InputData.GetOrConstructDataReadReference<FMidiStream>(Inputs::MidiStreamName),
 				InputData.GetOrCreateDefaultDataReadReference<int32>(Inputs::MinTrackIndexName, InParams.OperatorSettings),
 				InputData.GetOrCreateDefaultDataReadReference<int32>(Inputs::MaxTrackIndexName, InParams.OperatorSettings),
-				InputData.GetOrCreateDefaultDataReadReference<FString>(Inputs::MidiDeviceNameName, InParams.OperatorSettings)
+				InputData.GetOrCreateDefaultDataReadReference<FString>(Inputs::MidiDeviceNameName, InParams.OperatorSettings),
+				InputData.GetOrCreateDefaultDataReadReference<FTrigger>(Inputs::NoteOnName, InParams.OperatorSettings),
+				InputData.GetOrCreateDefaultDataReadReference<FTrigger>(Inputs::NoteOffName, InParams.OperatorSettings),
+				InputData.GetOrCreateDefaultDataReadReference<int32>(Inputs::PitchName, InParams.OperatorSettings),
+				InputData.GetOrCreateDefaultDataReadReference<int32>(Inputs::VelocityName, InParams.OperatorSettings)
 				//InputData.GetOrCreateDefaultDataReadReference<bool>(Inputs::IncludeConductorTrackName, InParams.OperatorSettings)
 			};
 
@@ -176,6 +194,10 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 			InVertexData.BindReadVertex(Inputs::MinTrackIndexName, Inputs.MinTrackIndex);
 			InVertexData.BindReadVertex(Inputs::MaxTrackIndexName, Inputs.MaxTrackIndex);
 			InVertexData.BindReadVertex(Inputs::MidiDeviceNameName, Inputs.MidiDeviceName);
+			InVertexData.BindReadVertex(Inputs::NoteOnName, Inputs.NoteOn);
+			InVertexData.BindReadVertex(Inputs::NoteOffName, Inputs.NoteOff);
+			InVertexData.BindReadVertex(Inputs::PitchName, Inputs.Pitch);
+			InVertexData.BindReadVertex(Inputs::VelocityName, Inputs.Velocity);
 			//InVertexData.BindReadVertex(Inputs::IncludeConductorTrackName, Inputs.IncludeConductorTrack);
 		}
 
@@ -279,16 +301,34 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 
 			Outputs.MidiStream->PrepareBlock();
 
+
+
+
 			if (*Inputs.Enabled)
 			{
 				//stream current tick?
 				//int32 CurrentTick = Inputs.MidiStream->GetClock()->GetCurrentMidiTick();
 				//Inputs.MidiStream->Add
+				if (Inputs.NoteOn->IsTriggeredInBlock())
+				{
+					//add a message to the stream
+					PendingMessages.Add(TTuple<int32, FMidiMsg>(0, FMidiMsg::CreateNoteOn(0, *Inputs.Pitch, *Inputs.Velocity)));
+
+				}
+
+				if (Inputs.NoteOff->IsTriggeredInBlock())
+				{
+					//add a message to the stream
+					PendingMessages.Add(TTuple<int32, FMidiMsg>(0, FMidiMsg::CreateNoteOff(0, *Inputs.Pitch)));
+				}
+
+
 				
 				MergeOp.Process(*Inputs.MidiStream, PendingMessages, *Outputs.MidiStream);
 				PendingMessages.Empty();
 				//Filter.Process(*Inputs.MidiStream, *Outputs.MidiStream);
 			}
+
 		}
 	private:
 		FInputs Inputs;

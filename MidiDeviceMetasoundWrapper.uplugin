@@ -9,7 +9,7 @@
 	"CreatedByURL": "https://github.com/Amir-BK",
 	"DocsURL": "",
 	"MarketplaceURL": "",
-	"SupportURL": "",
+	"SupportURL": "https://github.com/Amir-BK/MidiDeviceMetasoundWrapper",
 	"CanContainContent": true,
 	"IsBetaVersion": false,
 	"IsExperimentalVersion": false,
@@ -18,12 +18,21 @@
 		{
 			"Name": "MidiDeviceMetasoundWrapper",
 			"Type": "Runtime",
-			"LoadingPhase": "PreDefault"
+			"LoadingPhase": "PreDefault",
+			"PlatformAllowList": [
+				"Win64",
+				"Mac"
+				]
+
 		},
 		{
 			"Name": "MidiDeviceWrapperSubsystem",
 			"Type": "Runtime",
-			"LoadingPhase": "Default"
+			"LoadingPhase": "Default",
+			"PlatformAllowList": [
+				"Win64",
+				"Mac"
+				]
 		},
 		{
 			"Name": "MidiDeviceWrapperEditor",

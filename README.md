@@ -3,9 +3,15 @@ Real time midi device input into metasounds, and a few other QOL improvements
 
 
 The node in question, just insert the correct name of the device you'd like to use, use the standard MidiDevice functions to query the system for available devices and pass input controller string to the node.
+
 ![image](https://github.com/user-attachments/assets/db4d8d52-9fc0-4c4f-a825-94346a5c40be)
 
 The plugin also includes a simple subsystem that keeps track of opened midi device and keeps the midi device usable for as long as the game session is running, this is a work around to a bug in the Epic port midi implementation that makes devices unusable after they've been shut down once, which is problematic for a metasound use case in which you may want to open the same device every time the node is used (or receive the same midi device info in multiple nodes). 
+
+# **New** Trigger To Midi Note Node
+![image](https://github.com/user-attachments/assets/4dbe65a2-76cd-4bc4-a395-bad4e8c4e07e)
+
+Create midi notes from triggers and merge them to an existing stream 
 
 # Midi Keyboard Metasound Widget (Unreal 5.5+ only) 
 UE5.5 adds the ability to register custom widgets for metasound nodes, so it was pretty straight forward to connect the midi input node to a widget, the integration is a bit hacky right now and it only works when the node is actually connected to a valid midi input controller, but still, a pretty fun result (that also demonstrates the usage of the Music Device Controller subsystem) 

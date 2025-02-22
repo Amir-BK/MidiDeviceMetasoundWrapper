@@ -1,7 +1,7 @@
 {
 	"FileVersion": 3,
 	"Version": 1,
-	"VersionName": "1.0",
+	"VersionName": "1.0.1",
 	"FriendlyName": "MidiDeviceMetasoundWrapper",
 	"Description": "A wrapper for Epic's MidiDevice plugin that introduces a native metasound node and a few other QOL improvements. ",
 	"Category": "Audio",
@@ -22,8 +22,7 @@
 			"PlatformAllowList": [
 				"Win64",
 				"Mac"
-				]
-
+			]
 		},
 		{
 			"Name": "MidiDeviceWrapperSubsystem",
@@ -32,7 +31,7 @@
 			"PlatformAllowList": [
 				"Win64",
 				"Mac"
-				]
+			]
 		},
 		{
 			"Name": "MidiDeviceWrapperEditor",

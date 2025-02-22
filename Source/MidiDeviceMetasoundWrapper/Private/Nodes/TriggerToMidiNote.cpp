@@ -40,6 +40,13 @@ namespace MidiDeviceMetasoundwrapper::MidiStreamEventTriggerMergeOp
 				Event.TrackIndex = 1;
 				OutStream.AddMidiEvent(Event);
 			}
+
+			//should also add the events from inStream to outStream
+			for (const auto& event : InStream.GetEventsInBlock())
+			{
+				OutStream.AddMidiEvent(event);
+			}
+
 		}
 
 	};

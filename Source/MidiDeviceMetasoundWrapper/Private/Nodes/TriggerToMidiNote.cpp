@@ -1,5 +1,3 @@
-// Copyright Epic Games, Inc. All Rights Reserved.
-
 #include "CoreMinimal.h"
 #include "MetasoundExecutableOperator.h"
 #include "MetasoundFacade.h"

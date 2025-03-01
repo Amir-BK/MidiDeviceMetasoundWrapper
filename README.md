@@ -12,8 +12,6 @@ The plugin also includes a simple subsystem that keeps track of opened midi devi
 ![image](https://github.com/user-attachments/assets/c0646ddc-997e-4259-86d8-68fd3b2a7cec)
 
 
-Create midi notes from triggers and merge them to an existing stream 
-
 # Midi Keyboard Metasound Widget (Unreal 5.5+ only) 
 UE5.5 adds the ability to register custom widgets for metasound nodes, so it was pretty straight forward to connect the midi input node to a widget, the integration is a bit hacky right now and it only works when the node is actually connected to a valid midi input controller, but still, a pretty fun result (that also demonstrates the usage of the Music Device Controller subsystem) 
 

@@ -8,8 +8,9 @@ The node in question, just insert the correct name of the device you'd like to u
 
 The plugin also includes a simple subsystem that keeps track of opened midi device and keeps the midi device usable for as long as the game session is running, this is a work around to a bug in the Epic port midi implementation that makes devices unusable after they've been shut down once, which is problematic for a metasound use case in which you may want to open the same device every time the node is used (or receive the same midi device info in multiple nodes). 
 
-# **New** Trigger To Midi Note Node
-![image](https://github.com/user-attachments/assets/4dbe65a2-76cd-4bc4-a395-bad4e8c4e07e)
+# Metasound Nodes 
+![image](https://github.com/user-attachments/assets/c0646ddc-997e-4259-86d8-68fd3b2a7cec)
+
 
 Create midi notes from triggers and merge them to an existing stream 
 

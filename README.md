@@ -23,3 +23,6 @@ https://github.com/user-attachments/assets/13547b9c-4ca7-431e-a2db-be645f8d7c8e
 1. The node needs to get the name of the midi input controller to work, you can get this name by using the standard unreal Midi Device Manager methods (Find All Midi Devices, etc), pass this name as a string input to the metasound and connect that to the node if needed, but do not use the 'Create Midi Device' method exposed by the unreal midi device manager, the creation of the midi device is handled by the subsystem and it will not work if a device has already been created. 
 2. Unreal won't let two clients register to the same midi input device, the Music Device Controller subsystem in this plugin is a workaround for that, if you need to access the midi input with another object alongside the metasound input node use the provided function to get the Midi Input Controller instead of the default unreal midi device ones, this keeps a pointer to the midi device accessible both the metasound as well as to any other potential client who needs it - ![image](https://github.com/user-attachments/assets/cf3995a0-29da-4980-9e00-f65c625758bf),
    through the returned 'Music Input Device Controller' you can access all midi event delegates exposed by unreal as per usual.
+
+# Community/Feedback/Support -  
+Please join the discord server - https://discord.gg/hTKjSfcbEn

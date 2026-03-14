@@ -49,7 +49,7 @@ namespace MidiDeviceMetasoundwrapper::MIDIEventGeneratorNode
                 Info.Author = TEXT("Your Name");
                 Info.PromptIfMissing = PluginNodeMissingPrompt;
                 Info.DefaultInterface = GetVertexInterface();
-                Info.CategoryHierarchy = { INVTEXT("unDAW"), NodeCategories::Music };
+                Info.CategoryHierarchy = { NodeCategories::Music };
                 return Info;
             };
 

@@ -102,7 +102,7 @@ namespace MidiDeviceMetasoundwrapper::MidiDeviceAndWidgetReceiverNode
 					Info.Author = TEXT("Amir Ben-Kiki");
 					Info.PromptIfMissing = PluginNodeMissingPrompt;
 					Info.DefaultInterface = GetVertexInterface();
-					Info.CategoryHierarchy = { INVTEXT("unDAW"), NodeCategories::Music };
+					Info.CategoryHierarchy = { NodeCategories::Music };
 					return Info;
 				};
 

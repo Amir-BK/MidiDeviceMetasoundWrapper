@@ -12,8 +12,10 @@
 
 void MidiDeviceMetasoundWrapper::StartupModule()
 {
-#if !(UE_VERSION_OLDER_THAN(5, 7, 0))	
+#if !(UE_VERSION_OLDER_THAN(5, 7, 0))
 	METASOUND_REGISTER_ITEMS_IN_MODULE
+#else
+	FMetasoundFrontendRegistryContainer::Get()->RegisterPendingNodes();
 #endif
 }
 

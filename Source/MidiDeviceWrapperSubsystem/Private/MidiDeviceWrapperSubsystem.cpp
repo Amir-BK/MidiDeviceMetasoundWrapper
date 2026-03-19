@@ -6,6 +6,7 @@
 //#include "MetasoundUObjectRegistry.h"
 
 #include "MetasoundDataTypeRegistrationMacro.h"
+#include "VirtualMidiDevice.h"
 
 
 #define LOCTEXT_NAMESPACE "MidiDeviceWrapperSubsystemModule"
@@ -16,7 +17,15 @@ void MidiDeviceWrapperSubsystem::StartupModule()
 	UE_LOG(LogTemp, Warning, TEXT("WE SEE CHUNREAL!"));
 #endif 
 
-
+	Metasound::Frontend::FModuleInfo ModuleInfo{};
+#if WITH_EDITORONLY_DATA
+	ModuleInfo.PluginName = TEXT("MidiDeviceMetasoundWrapper");
+	ModuleInfo.ModuleName = TEXT("MidiDeviceWrapperSubsystem");
+#endif
+	Metasound::Frontend::RegisterDataType<
+		Metasound::FVirtualMidiDeviceAsset,
+		Metasound::ELiteralType::UObjectProxy,
+		UVirtualMidiDevice>(ModuleInfo);
 }
 
 void MidiDeviceWrapperSubsystem::ShutdownModule()

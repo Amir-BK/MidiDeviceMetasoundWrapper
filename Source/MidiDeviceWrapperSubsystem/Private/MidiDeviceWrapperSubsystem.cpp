@@ -6,6 +6,7 @@
 //#include "MetasoundUObjectRegistry.h"
 
 #include "MetasoundDataTypeRegistrationMacro.h"
+#include "Misc/EngineVersionComparison.h"
 #include "VirtualMidiDevice.h"
 
 
@@ -13,9 +14,8 @@
 
 void MidiDeviceWrapperSubsystem::StartupModule()
 {
-#ifdef WITH_CHUNREAL_PLUGIN
-	UE_LOG(LogTemp, Warning, TEXT("WE SEE CHUNREAL!"));
-#endif 
+
+#if !(UE_VERSION_OLDER_THAN(5, 7, 0))
 
 	Metasound::Frontend::FModuleInfo ModuleInfo{};
 #if WITH_EDITORONLY_DATA
@@ -26,6 +26,8 @@ void MidiDeviceWrapperSubsystem::StartupModule()
 		Metasound::FVirtualMidiDeviceAsset,
 		Metasound::ELiteralType::UObjectProxy,
 		UVirtualMidiDevice>(ModuleInfo);
+
+#endif
 }
 
 void MidiDeviceWrapperSubsystem::ShutdownModule()

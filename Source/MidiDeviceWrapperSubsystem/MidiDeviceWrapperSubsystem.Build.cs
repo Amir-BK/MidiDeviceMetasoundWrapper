@@ -100,29 +100,4 @@ public class MidiDeviceWrapperSubsystem : ModuleRules
             );
     }
 
-	static public void ConfigurePlugins(ModuleRules Rules, ReadOnlyTargetRules Target)
-	{
-		JsonObject RawObject;
-		if (JsonObject.TryRead(Target.ProjectFile, out RawObject))
-		{
-			JsonObject[] pluginObjects;
-			if (RawObject.TryGetObjectArrayField("Plugins", out pluginObjects))
-			{
-				foreach (JsonObject pluginObject in pluginObjects)
-				{
-					string pluginName;
-					pluginObject.TryGetStringField("Name", out pluginName);
-
-					bool pluginEnabled;
-					pluginObject.TryGetBoolField("Enabled", out pluginEnabled);
-
-					if (pluginName == "Chunreal" && pluginEnabled)
-					{
-
-							Rules.PublicDefinitions.Add("WITH_CHUNREAL_PLUGIN");
-					}
-				}
-			}
-		}
-	}
 }
